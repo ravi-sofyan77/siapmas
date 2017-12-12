@@ -42,7 +42,7 @@ class Migration_Install_ion_auth extends CI_Migration {
 				'description' => 'Administrator'
 			),
 			array(
-				'name'        => 'members',
+				'name'        => 'mahasiswa',
 				'description' => 'General User'
 			)
 		);

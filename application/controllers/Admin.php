@@ -43,8 +43,10 @@ class Admin extends MY_Controller {
 		$this->crud->display_as('sarana_dari','Sarana dari');
 		$this->crud->display_as('id_prasarana','Dari prasarana');
 		$this->crud->required_fields('nama_sarana');
-		$data['content'] = (array) $this->crud->render();
-		$this->template->render($data);
+		
+		$output = (array) $this->crud->render();
+		
+		$this->template->render($output);
 	}
 
 	

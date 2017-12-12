@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Mahasiswa extends CI_Controller {
+class Mahasiswa extends MY_Controller {
 
 	/**
 	 * Index Page for this controller.
@@ -21,7 +21,7 @@ class Mahasiswa extends CI_Controller {
 
 	public function __construct(){
 		parent::__construct();
-				
+		$this->template->set_layout('ui_bootstrap_admin');
 	}
 	public function index()
 	{
@@ -30,6 +30,20 @@ class Mahasiswa extends CI_Controller {
 
 	public function daftar_pengaduan()
 	{
-		# code...
+		$this->crud->set_table('pengaduan');
+		$this->crud->set_subject('Pengaduan');
+		
+		$this->crud->set_relation('pengaduan_kepada','groups','name');
+		
+		$this->crud->display_as('pengaduan_kepada','Pengaduan kepada');
+		
+		$this->crud->columns('pengaduan_tentang','pengaduan_kepada','status_pengaduan');
+		//$this->crud->unset_columns('status_pengaduan');
+		$this->crud->fields('pengaduan_tentang','pengaduan_kepada');
+		$this->crud->required_fields('pengaduan_tentang');
+		
+		$output = (array) $this->crud->render();
+		
+		$this->template->render($output);
 	}
 }
