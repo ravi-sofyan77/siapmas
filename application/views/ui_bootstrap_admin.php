@@ -36,6 +36,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		<?php echo anchor('auth/create_group', lang('index_create_group_link'))?> |
 		<?php echo anchor('admin/daftar_prasarana', ucwords('prasarana'))?> |
 		<?php echo anchor('admin/daftar_sarana', ucwords('sarana'))?> |
+		<?php echo anchor('admin/daftar_menu', ucwords('daftar menu'))?> |
 		<?php echo anchor('auth/logout', 'logout')?>
 
 		</div>

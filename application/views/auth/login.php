@@ -32,5 +32,5 @@
 
 <!-- login -->
 <div class="login-1 text-center">
-	<p>Belum memilih akun ? <?php echo anchor('#',ucwords('register disini'));?></p>
+	<p>Belum memilih akun ? <?php echo anchor('welcome/register',ucwords('register disini'));?></p>
 </div>

@@ -49,7 +49,7 @@ class Template
 		}
 		
 		$data['alert']		= $this->ci->session->flashdata('alert'); 
-		$data['navigasi']	= get_menu_by_current_user();
+		//$data['navigasi']	= get_menu_by_current_user();
 		
 		$data['default_c']	= $this->ci->router->default_controller;
 

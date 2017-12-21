@@ -15,12 +15,14 @@ class MY_Controller extends CI_Controller
 		//$this->load->config('custom_records',true);
 		//$this->load->config('custom_template',true);
 		//$this->load->config('custom_glite',true);
-		$this->load->helper(array('tools','glite'));
+		$this->load->helper(array('tools','siapmas'));
 
 		$this->load->library('grocery_CRUD'); //memanggil library grocery crud
 		//grocery crud adalah program yang menyediakan tabel beserta dengan
 
 		$this->set_indonesian_lang();
+
+		$this->do_migration();
 
 		try {
 			$this->crud = new grocery_CRUD();
@@ -176,5 +178,31 @@ class MY_Controller extends CI_Controller
   			'profiler',
   			'unit_test'
   		));
+  	}
+
+  	protected function do_migration($version = NULL){
+    	$this->load->library('migration');
+    	if(isset($version) && ($this->migration->version($version) === FALSE)){
+      		$this->session->set_flashdata('message',$this->migration->error_string());
+      	}elseif(is_null($version) && $this->migration->latest() === FALSE){
+      		$this->session->set_flashdata('message',$this->migration->error_string());
+    	}
+  	}
+
+  	public function go_back($method='index')
+  	{
+  		if (isset($_SERVER['HTTP_REFERER'])) {
+  			header('Location: ' . $_SERVER['HTTP_REFERER']);
+  			exit;
+  		}else{
+  			$this->go_to($method);
+  		}
+  	}
+
+  	public function go_to($method='index')
+  	{
+  		
+  		$controller = $this->router->fetch_class();
+  		redirect($controller.'/'.$method,'refresh');
   	}
 }
