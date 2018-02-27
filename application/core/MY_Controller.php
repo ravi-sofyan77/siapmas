@@ -94,6 +94,7 @@ class MY_Controller extends CI_Controller
 			);
 			$identity_column = $this->config->item('identity', 'ion_auth');
 			$data['identity_column'] = $identity_column;
+			$this->template->set_layout('ui_register');
 			$this->template->set_content('pages/register',$data)->render();
 		}else{
 			

@@ -23,8 +23,6 @@ class Template
 
 	public function set_content($content='',$data=array())
 	{
-		
-
 		$data['me'] 	= $this->ci->router->fetch_class();
 		$view_path 		= APPPATH.'views/'.$content.'.php';
 		if ($this->ci->logged_in) {

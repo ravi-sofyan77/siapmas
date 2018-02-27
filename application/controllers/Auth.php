@@ -29,7 +29,7 @@ class Auth extends MY_Controller
 		if (!$this->ion_auth->logged_in())
 		{
 			// redirect them to the login page
-			redirect('auth/login', 'refresh');
+			redirect('auth/landingpage', 'refresh');
 		}
 		else if (!$this->ion_auth->is_admin()) // remove this elseif if you want to enable this for non-admins
 		{
@@ -62,9 +62,14 @@ class Auth extends MY_Controller
 	/**
 	 * Log the user in
 	 */
+	public function landingpage()
+	{
+		$this->template->set_layout('ui_landingpage');
+		$this->template->set_content('auth/landingpage')->render();
+	}
 	public function login()
 	{
-		$this->data['title'] = $this->lang->line('login_heading');
+	$this->data['title'] = $this->lang->line('login_heading');
 
 		// validate form input
 		$this->form_validation->set_rules('identity', str_replace(':', '', $this->lang->line('login_identity_label')), 'required');
@@ -110,11 +115,10 @@ class Auth extends MY_Controller
 			);
 
 			//$this->_render_page('auth/login', $this->data);
-			$this->template->set_layout('ui_dropbox_left_side');
+			$this->template->set_layout('ui_login');
 			$this->template->set_content('auth/login', $this->data)->render();
 		}
 	}
-
 	/**
 	 * Log the user out
 	 */

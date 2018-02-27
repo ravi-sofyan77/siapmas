@@ -1,16 +1,16 @@
 <div id="infoMessage"><?php echo (isset($message))? $message : '';?></div>
-
+<h1 style="font-weight: 700; font-size: 3em; margin-bottom: 25px;">Register</h1>
+<p>Silahkan Mendaftarkan Diri Anda Sesuai Dengan Identitas Asli</p>
 <?php echo form_open("auth/submit_register");?>
 <div class="row">
-    <div class="col-xs-12">
-        <label>
+        <div class="col-md-6">
             <?php echo lang('create_user_fname_label', 'first_name');?> <br />
             <?php echo form_input($first_name);?>
-        </label>
-        <label>
+        </div>
+        <div class="col-md-6">
             <?php echo lang('create_user_lname_label', 'last_name');?> <br />
             <?php echo form_input($last_name);?>
-        </label>
+        </div>
         <?php
         if($identity_column!=='email') {
             echo '<label>';
@@ -22,7 +22,7 @@
         }
         ?>
 
-        <label>
+        <div class="col-md-12" style="margin-top: 15px;">
           Program Studi
           <?php //echo lang('create_user_company_label', 'company');?> <br />
           <select class="c-input" name="company">
@@ -53,37 +53,34 @@
                 </option>
             </optgroup>
         </select>
-    </label>
-    <label>
+    </div>
+    <div class="col-md-6" style="margin-top: 15px;">
       <?php echo lang('create_user_email_label', 'email');?> <br />
       <?php echo form_input($email);?>
-  </label>
+  </div>
 
-  <label>
+  <div class="col-md-6" style="margin-top: 15px;">
       <?php echo lang('create_user_phone_label', 'phone');?> <br />
       <?php echo form_input($phone);?>
-  </label>
+  </div>
 
-  <label>
+  <div class="col-md-6" style="margin-top: 15px;">
       <?php echo lang('create_user_password_label', 'password');?> <br />
       <?php echo form_input($password);?>
-  </label>
+  </div>
 
-  <label>
+  <div class="col-md-6" style="margin-top: 15px;">
       <?php echo lang('create_user_password_confirm_label', 'password_confirm');?> <br />
       <?php echo form_input($password_confirm);?>
-  </label>
-<div class="clearfix">
-    <div class="u-l-fl">
+  </div>
+
+    <div class="col-md-12">
+        <?php echo form_submit('submit', 'Register',array('class'=>'c-btn c-btn--primary btn-register'));?>
+        <div style="margin-top: 15px;" class="text-center">
         <?php echo anchor('auth/login','kembali');?>
+      </div>
     </div>
-    <div class="u-l-fr">
-        <?php echo form_submit('submit', 'Register',array('class'=>'c-btn c-btn--primary'));?>
-    </div>
-</div>
 
   <?php echo form_close();?>
-
-</div>
 
 </div>
