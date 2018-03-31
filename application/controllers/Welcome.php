@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Welcome extends MY_Controller {
+class Welcome extends CI_Controller {
 
 	/**
 	 * Index Page for this controller.
@@ -16,20 +16,10 @@ class Welcome extends MY_Controller {
 	 *
 	 * So any other public methods not prefixed with an underscore will
 	 * map to /index.php/welcome/<method_name>
-	 * @see https://codeigniter.com/user_guide/general/urls.html
+	 * @see http://codeigniter.com/user_guide/general/urls.html
 	 */
-
-	public function __construct(){
-		parent::__construct();
-		$this->load->library(array('ion_auth', 'form_validation'));
-		$this->template->set_layout('ui_bootstrap');
-	}
 	public function index()
 	{
-		
-		$this->load->view('welcome_message');	
-		
+		$this->load->view('welcome_message');
 	}
-
-	
 }

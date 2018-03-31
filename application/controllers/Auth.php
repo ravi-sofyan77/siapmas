@@ -11,9 +11,7 @@ class Auth extends MY_Controller
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->database();
-		$this->load->library(array('ion_auth', 'form_validation'));
-		$this->load->helper(array('url', 'language'));
+
 
 		$this->form_validation->set_error_delimiters($this->config->item('error_start_delimiter', 'ion_auth'), $this->config->item('error_end_delimiter', 'ion_auth'));
 
@@ -27,22 +25,26 @@ class Auth extends MY_Controller
 	 */
 	public function index()
 	{
-		
+
 		if (!$this->ion_auth->logged_in())
 		{
 			// redirect them to the login page
-			redirect('auth/login', 'refresh');
+			redirect('auth/landingpage', 'refresh');
 		}
 		else if (!$this->ion_auth->is_admin()) // remove this elseif if you want to enable this for non-admins
 		{
 			// redirect them to the home page because they must be an administrator to view this
+			if ($this->ion_auth->in_group('mahasiswa')) {
+				redirect('mahasiswa/index','refresh');
+			}else{
+				redirect('staff/index','refresh');
+			}
 			//return show_error('You must be an administrator to view this page.');
-			redirect('welcome/index','refresh');
 		}
 		else
 		{
 			// set the flash data error message if there is one
-			$this->data['message'] = (validation_errors()) ? validation_errors() : $this->session->flashdata('message');
+			/*$this->data['message'] = (validation_errors()) ? validation_errors() : $this->session->flashdata('message');
 
 			//list the users
 			$this->data['users'] = $this->ion_auth->users()->result();
@@ -52,17 +54,22 @@ class Auth extends MY_Controller
 			}
 
 			//$this->_render_page('auth/index', $this->data);
-			$this->template->set_content('auth/index', $this->data)->render();
+			$this->template->set_content('auth/index', $this->data)->render();*/
+			redirect('admin/index','refresh');
 		}
 	}
 
 	/**
 	 * Log the user in
 	 */
+	public function landingpage()
+	{
+		$this->template->set_layout('ui_landingpage');
+		$this->template->set_content('auth/landingpage')->render();
+	}
 	public function login()
 	{
-		$this->template->set_layout('ui_dropbox_left_side');
-		$this->data['title'] = $this->lang->line('login_heading');
+	$this->data['title'] = $this->lang->line('login_heading');
 
 		// validate form input
 		$this->form_validation->set_rules('identity', str_replace(':', '', $this->lang->line('login_identity_label')), 'required');
@@ -85,8 +92,7 @@ class Auth extends MY_Controller
 			{
 				// if the login was un-successful
 				// redirect them back to the login page
-				//$this->session->set_flashdata('message', $this->ion_auth->errors());
-				$this->template->set_alert('warning', $this->ion_auth->errors());
+				$this->session->set_flashdata('message', $this->ion_auth->errors());
 				redirect('auth/login', 'refresh'); // use redirects instead of loading views for compatibility with MY_Controller libraries
 			}
 		}
@@ -95,8 +101,6 @@ class Auth extends MY_Controller
 			// the user is not logging in so display the login page
 			// set the flash data error message if there is one
 			$this->data['message'] = (validation_errors()) ? validation_errors() : $this->session->flashdata('message');
-			$this->template->set_alert('warning',validation_errors()); 
-			//$this->ion_auth->errors());
 
 			$this->data['identity'] = array('name' => 'identity',
 				'id' => 'identity',
@@ -111,10 +115,10 @@ class Auth extends MY_Controller
 			);
 
 			//$this->_render_page('auth/login', $this->data);
+			$this->template->set_layout('ui_login');
 			$this->template->set_content('auth/login', $this->data)->render();
 		}
 	}
-
 	/**
 	 * Log the user out
 	 */
@@ -241,6 +245,7 @@ class Auth extends MY_Controller
 			// set any errors and display the form
 			$this->data['message'] = (validation_errors()) ? validation_errors() : $this->session->flashdata('message');
 			//$this->_render_page('auth/forgot_password', $this->data);
+			$this->template->set_layout('ui_login');
 			$this->template->set_content('auth/forgot_password', $this->data)->render();
 		}
 		else
@@ -329,6 +334,7 @@ class Auth extends MY_Controller
 					'id' => 'user_id',
 					'type' => 'hidden',
 					'value' => $user->id,
+					'class'=>'c-input',
 				);
 				$this->data['csrf'] = $this->_get_csrf_nonce();
 				$this->data['code'] = $code;
@@ -477,16 +483,16 @@ class Auth extends MY_Controller
 		$this->data['identity_column'] = $identity_column;
 
 		// validate form input
-		$this->form_validation->set_rules('first_name', $this->lang->line('create_user_validation_fname_label'), 'trim|required');
-		$this->form_validation->set_rules('last_name', $this->lang->line('create_user_validation_lname_label'), 'trim|required');
+		$this->form_validation->set_rules('first_name', $this->lang->line('create_user_validation_fname_label'), 'required');
+//		$this->form_validation->set_rules('last_name', $this->lang->line('create_user_validation_lname_label'), 'required');
 		if ($identity_column !== 'email')
 		{
-			$this->form_validation->set_rules('identity', $this->lang->line('create_user_validation_identity_label'), 'trim|required|is_unique[' . $tables['users'] . '.' . $identity_column . ']');
-			$this->form_validation->set_rules('email', $this->lang->line('create_user_validation_email_label'), 'trim|required|valid_email');
+			$this->form_validation->set_rules('identity', $this->lang->line('create_user_validation_identity_label'), 'required|is_unique[' . $tables['users'] . '.' . $identity_column . ']');
+			$this->form_validation->set_rules('email', $this->lang->line('create_user_validation_email_label'), 'required|valid_email');
 		}
 		else
 		{
-			$this->form_validation->set_rules('email', $this->lang->line('create_user_validation_email_label'), 'trim|required|valid_email|is_unique[' . $tables['users'] . '.email]');
+			$this->form_validation->set_rules('email', $this->lang->line('create_user_validation_email_label'), 'required|valid_email|is_unique[' . $tables['users'] . '.email]');
 		}
 		$this->form_validation->set_rules('phone', $this->lang->line('create_user_validation_phone_label'), 'trim');
 		$this->form_validation->set_rules('company', $this->lang->line('create_user_validation_company_label'), 'trim');
@@ -506,11 +512,20 @@ class Auth extends MY_Controller
 				'phone' => $this->input->post('phone'),
 			);
 		}
-		if ($this->form_validation->run() === TRUE && $this->ion_auth->register($identity, $password, $email, $additional_data))
+		if ($this->form_validation->run() === TRUE )
+			//&& $this->ion_auth->register($identity, $password, $email, $additional_data))
 		{
+
 			// check to see if we are creating the user
 			// redirect them back to the admin page
-			$this->session->set_flashdata('message', $this->ion_auth->messages());
+			//$this->session->set_flashdata('message', $this->ion_auth->messages());
+			$group_staff = $this->db->get_where('groups',array('name'=>'staff'))->row();
+			if (!is_null($group_staff)) {
+				$this->ion_auth->register($identity, $password, $email, $additional_data,array($group_staff->id));
+				$this->session->set_flashdata('message', $this->ion_auth->messages());
+			}else{
+				$this->session->set_flashdata('message', 'group staff belum dibuat');
+			}
 			redirect("auth", 'refresh');
 		}
 		else
@@ -600,10 +615,10 @@ class Auth extends MY_Controller
 		$currentGroups = $this->ion_auth->get_users_groups($id)->result();
 
 		// validate form input
-		$this->form_validation->set_rules('first_name', $this->lang->line('edit_user_validation_fname_label'), 'trim|required');
-		$this->form_validation->set_rules('last_name', $this->lang->line('edit_user_validation_lname_label'), 'trim|required');
-		$this->form_validation->set_rules('phone', $this->lang->line('edit_user_validation_phone_label'), 'trim|required');
-		$this->form_validation->set_rules('company', $this->lang->line('edit_user_validation_company_label'), 'trim|required');
+		$this->form_validation->set_rules('first_name', $this->lang->line('edit_user_validation_fname_label'), 'required');
+		$this->form_validation->set_rules('last_name', $this->lang->line('edit_user_validation_lname_label'), 'required');
+		$this->form_validation->set_rules('phone', $this->lang->line('edit_user_validation_phone_label'), 'required');
+		$this->form_validation->set_rules('company', $this->lang->line('edit_user_validation_company_label'), 'required');
 
 		if (isset($_POST) && !empty($_POST))
 		{
@@ -712,6 +727,7 @@ class Auth extends MY_Controller
 			'value' => $this->form_validation->set_value('last_name', $user->last_name),
 			'class'=>'c-input',
 		);
+
 		$this->data['company'] = array(
 			'name'  => 'company',
 			'id'    => 'company',
@@ -756,7 +772,7 @@ class Auth extends MY_Controller
 		}
 
 		// validate form input
-		$this->form_validation->set_rules('group_name', $this->lang->line('create_group_validation_name_label'), 'trim|required|alpha_dash');
+		$this->form_validation->set_rules('group_name', $this->lang->line('create_group_validation_name_label'), 'required|alpha_dash');
 
 		if ($this->form_validation->run() === TRUE)
 		{
@@ -861,8 +877,9 @@ class Auth extends MY_Controller
 			'value' => $this->form_validation->set_value('group_description', $group->description),
 			'class'=>'c-input',
 		);
-		$this->template->set_content('auth/edit_group', $this->data)->render();
+
 		//$this->_render_page('auth/edit_group', $this->data);
+		$this->template->set_content('auth/edit_group', $this->data)->render();
 	}
 
 	/**
@@ -915,5 +932,7 @@ class Auth extends MY_Controller
 			return $view_html;
 		}
 	}
+
+
 
 }

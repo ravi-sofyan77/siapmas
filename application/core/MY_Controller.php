@@ -5,219 +5,35 @@
 */
 class MY_Controller extends CI_Controller
 {
-	public $crud;	
 	public $logged_in = array();
+	public $crud;
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->library(array('template','migration','ion_auth'));
-		
-		//$this->load->config('custom_records',true);
-		//$this->load->config('custom_template',true);
-		//$this->load->config('custom_glite',true);
-		$this->load->helper(array('tools','glite'));
+		date_default_timezone_set('Asia/Jakarta');
 
-		$this->load->library('grocery_CRUD'); //memanggil library grocery crud
-		//grocery crud adalah program yang menyediakan tabel beserta dengan
+		$this->load->library(array('template','ion_auth','grocery_CRUD'));
+		$this->load->helper(array('tools','siapmas'));
+
+		$this->crud = new grocery_CRUD();
+		$methods 	= get_class_methods($this);
+		
+		$this->template->set_menu($methods);
+
+		if ($this->ion_auth->logged_in()) {
+			$user_id = $this->ion_auth->get_user_id();
+			if ($user_id > 0) {
+				$this->load->model('users');
+				$this->logged_in = $this->users->get($user_id);
+			}
+		}
+		
+		$this->crud->set_theme('bootstrap-v4');
 
 		$this->set_indonesian_lang();
-
-		$this->do_migration();
-
-		try {
-			$this->crud = new grocery_CRUD();
-			$this->crud->set_theme('datatables');
-		} catch (Exception $e) {
-			show_error($e->getMessage().' --- '.$e->getTraceAsString());
-		}
-
-		
-		if (!$this->ion_auth->logged_in() && $this->router->fetch_class() != 'auth') {
-			redirect('auth','refresh');
-		}elseif (
-			$this->ion_auth->logged_in() && 
-			$this->router->fetch_class() == 'auth') {
-			redirect('welcome','refresh');
-		}
-
-
-
-	}
-	public function _crud_output($output = null)
-	{
-		$this->load->view('crud.php',(array)$output);
 	}
 
-	public function logout()
-	{
-		$this->load->library('ion_auth');
-
-		if ($this->ion_auth->logout()) {
-			
-			$this->logged_in = array();
-		}
-		redirect('auth/index','refresh');
-	}
-
-
-	public function daftar($table_name='')
-	{
-		$this->load->library('datatables');
-		$tables = $datatables->get_tables();
-		if ($tables) {	
-			if (in_array($table_name, $tables)) {
-				$datatables->set_sources($table_name)->show();
-			}else{
-				$this->template->set_content('404_not_found')->render();
-			}
-		}else{
-			$this->template->set_content('404_not_found')->render();
-		}
-	}
-
-	public function edit($table_name='',$primary_value='')
-	{
-		$this->load->library('datatables');
-		$data = array();
-		if (in_array($table_name, $datatables->get_tables())) {
-			$data = $datatables->get_details($table_name,$primary_value);	
-		}else{
-			$this->template->set_alert('warning','tabel tidak dikenali');
-		}
-		$me 			= $this->router->fetch_class();
-		$data['action'] = site_url($me.'/simpan/'.$table_name);
-		$data 			= $this->trigger($data);
-		$this->template->set_content('forms/input_edit',$data)->render();
-	}
-
-
-	public function tambah($table_name='')
-	{
-		$data 	= array();
-		$this->load->library('datatables');
-		if (in_array($table_name, $datatables->get_tables())) {
-			$config = $this->config->item($table_name,'custom_records');
-
-			if (!is_null($config)) {
-				
-				if (isset($config['input'])) {
-					$data['fields'][$table_name] = $config['input'];
-				}
-			}
-		}else{
-			$this->template->set_alert('warning','tabel tidak dikenali');
-		}
-		
-		$me 			= $this->router->fetch_class();
-		$data['action'] = site_url($me.'/simpan/'.$table_name);
-		$data 			= $this->trigger($data);
-		$this->template->set_content('forms/input_baru',$data)->render();
-	}
-
-	public function hapus($table_name='',$primary_value='')
-	{
-		$this->load->library('datatables');
-		if (in_array($table_name, $datatables->get_tables())) {
-			if (!$datatables->delete($table_name,$primary_value)) {
-				$this->template->set_alert('warning','gagal menghapus data :(');
-			}
-		}else{
-			$this->template->set_alert('warning','nama tabel tidak dikenali ');
-		}
-		$this->go_back();
-	}
-
-	public function simpan($table_name='')
-	{
-		$this->load->library('datatables');
-		$this->load->model('berkas');
-		if (in_array($table_name, $datatables->get_tables())) {
-			$primary_key	= $datatables->get_primary_key($table_name);		
-			$length_id 		= 0;
-			$rules_name 	= $table_name;
-			if (!is_null($this->input->post(NULL,true))) {
-				
-				$data 			= $this->input->post(NULL,true);
-
-				if (isset($_POST[$primary_key]) && $data[$primary_key]) {
-					unset($data[$primary_key]);
-					$length_id 	= strlen($_POST[$primary_key]);	
-					$rules_name ='edit_'.$table_name;
-				}
-			
-				if ($this->form_validation->run($rules_name)) {
-					
-					$this->proceed_to_save($length_id,$table_name,$primary_key,$data);
-
-				}elseif($this->form_validation->run($table_name)){
-					
-					$this->proceed_to_save($length_id,$table_name,$primary_key,$data);
-					
-				}else{
-					if (empty(validation_errors())) {
-						$this->template->set_alert('warning','validasi form '.$table_name.' belum diatur');
-					}else{
-						$this->template->set_alert('warning',validation_errors());
-					}
-				}
-				
-			}
-
-		}else{
-			$this->template->set_alert('warning','nama tabel tidak dikenali ');
-		}
-		$this->go_back();
-		
-	}
-
-	protected function set_indonesian_lang()
-  	{
-  		$this->lang->load(array(
-  			'auth',
-  			'db',
-  			'ion_auth',
-  			'form_validation',
-  			'migration',
-  			'rest_controller',
-  			'upload',
-  			'calendar',
-  			'email',
-  			'date',
-  			'ftp',
-  			'imglib',
-  			'number',
-  			'profiler',
-  			'unit_test'
-  		));
-  	}
-
-  	protected function do_migration($version = NULL){
-    	$this->load->library('migration');
-    	if(isset($version) && ($this->migration->version($version) === FALSE)){
-      		$this->session->set_flashdata('message',$this->migration->error_string());
-      	}elseif(is_null($version) && $this->migration->latest() === FALSE){
-      		$this->session->set_flashdata('message',$this->migration->error_string());
-    	}
-  	}
-
-  	public function go_back($method='index')
-  	{
-  		if (isset($_SERVER['HTTP_REFERER'])) {
-  			header('Location: ' . $_SERVER['HTTP_REFERER']);
-  			exit;
-  		}else{
-  			$this->go_to($method);
-  		}
-  	}
-
-  	public function go_to($method='index')
-  	{
-  		
-  		$controller = $this->router->fetch_class();
-  		redirect($controller.'/'.$method,'refresh');
-  	}
-
-  	public function register()
+	public function register()
 	{
 		if (!$this->ion_auth->logged_in()) {
 
@@ -248,7 +64,9 @@ class MY_Controller extends CI_Controller
 				'id' => 'email',
 				'type' => 'text',
 				'value' => $this->form_validation->set_value('email'),
-				'class'=>'c-input',
+				'class'=>'c-input c-validation-email',
+				'pattern' => '[\w.%+-]+@ittelkom-pwt\.ac\.id',
+				'placeholder'=> '@ittelkom-pwt.ac.id'
 			);
 			$data['company'] = array(
 				'name' => 'company',
@@ -280,7 +98,8 @@ class MY_Controller extends CI_Controller
 			);
 			$identity_column = $this->config->item('identity', 'ion_auth');
 			$data['identity_column'] = $identity_column;
-			$this->template->set_content('welcome/register',$data)->render();
+			$this->template->set_layout('ui_register');
+			$this->template->set_content('pages/register',$data)->render();
 		}else{
 			
 			$logout = $this->ion_auth->logout();
@@ -327,21 +146,104 @@ class MY_Controller extends CI_Controller
 		}
 		
 		
-		if ($this->form_validation->run() === TRUE && $this->ion_auth->register($identity, $password, $email, $additional_data))
-		{
-			if ($this->ion_auth->login($identity, $password, false)){
-				# code...
-				$this->template->set_alert('warning',$this->ion_auth->messages());
-				redirect("welcome", 'refresh');
-			}else{
-				$this->template->set_alert('info','akun belum aktif');
+		if ($this->form_validation->run() === TRUE){
+			$group_mhs = $this->db->get_where('groups',array('name'=>'mahasiswa'))->row();
+			if (isset($group_mhs->id)) {
+				$register = $this->ion_auth->register($identity, $password, $email, $additional_data,array($group_mhs->id));
+				if ($register > 0) {
+					if ($this->ion_auth->login($identity, $password, false)){
+					$this->template->set_alert('warning',$this->ion_auth->messages());
+						redirect("mahasiswa/index", 'refresh');
+					}else{
+						$this->template->set_alert('info','akun belum aktif');
+					}
+				}else{
+					$this->template->set_alert('info','registrasi gagal ');
+				}
+				
 			}
+			
+			/**/
 		}
 		else
 		{
 			$this->template->set_alert('warning',validation_errors());
 			
 		}
-		redirect('auth/register','refresh');
+		//redirect('auth/register','refresh');
 	}
+
+	public function profile(){
+		if ($this->ion_auth->logged_in()) {
+			$this->load->model('users');
+			$user_id = $this->ion_auth->get_user_id();
+			$data['profile'] 	= $this->users->get($user_id);
+			$data['controller'] = $this->router->fetch_class();
+			$this->template->set_content('pages/profile',$data)->render();
+		}
+	}
+
+	public function update_profile(){
+		$this->load->model('users');
+		$controller = $this->router->fetch_class();
+		$data 		= $this->input->post(NULL,true);
+		if ($data) {
+			if (isset($data['c_password'])) {
+				unset($data['c_password']);
+			}
+			if ($this->ion_auth->logged_in()) {
+				$length_password 	= strlen($data['password']);
+				$user_id 			= $this->ion_auth->get_user_id();
+				if ($length_password > 4) {
+					if ($this->form_validation->run('submit_profile')) {
+						$change  	= $this->ion_auth->reset_password($data['email'], $data['password']);
+						if ($change) {
+							if (isset($data['password'])) {
+								unset($data['password']);
+							}
+							$this->template->set_alert('success','Profil berhasil diperbaharui ');
+
+							$this->users->update($user_id,$data);
+						}else{
+							$this->template->set_alert('warning','password gagal diperbaharui ');
+						}
+					}else{
+						$this->template->set_alert('warning',validation_errors());
+					}
+				}else{
+					if (isset($data['password'])) {
+						unset($data['password']);
+					}
+					$this->form_validation->set_rules('email','Email','required|valid_email');
+					if ($this->form_validation->run()) {
+						$this->template->set_alert('success','Profil berhasil diperbaharui ');
+						$this->users->update($user_id,$data);
+					}else{
+						$this->template->set_alert('warning',validation_errors());
+					}
+				}
+			}
+			
+		}
+		redirect($controller.'/profile','refresh');
+	}
+
+	public function set_indonesian_lang()
+  	{
+  		$this->lang->load('auth', 'indonesian');
+  		$this->lang->load('db', 'indonesian');
+  		$this->lang->load('ion_auth', 'indonesian');
+  		$this->lang->load('form_validation', 'indonesian');
+  		$this->lang->load('migration', 'indonesian');
+  		$this->lang->load('rest_controller', 'indonesian');
+  		$this->lang->load('upload', 'indonesian');
+  		$this->lang->load('email', 'indonesian');
+  		$this->lang->load('calendar', 'indonesian');
+  		$this->lang->load('date', 'indonesian');
+  		$this->lang->load('ftp', 'indonesian');
+  		$this->lang->load('imglib', 'indonesian');
+  		$this->lang->load('number', 'indonesian');
+  		$this->lang->load('profiler', 'indonesian');
+  		$this->lang->load('unit_test', 'indonesian');
+  	}
 }

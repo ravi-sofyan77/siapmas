@@ -27,13 +27,14 @@ $(document).ready(function() {
 		}
 	});
 
-    if(!unset_export)
-    {
-        aButtons.push({
-            "sExtends":    "text",
-            "sButtonText": export_text
-        });
-    }
+	if(!unset_export)
+	{
+		aButtons.push(    {
+	         "sExtends":    "xls",
+	         "sButtonText": export_text,
+	         "mColumns": mColumns
+	     });
+	}
 
 	if(!unset_print)
 	{
@@ -101,7 +102,7 @@ $(document).ready(function() {
 
 	loadListenersForDatatables();
 
-	$('a.ui-button').on("mouseover mouseout", function(event) {
+	$('a[role=button],button[role=button]').live("mouseover mouseout", function(event) {
 		  if ( event.type == "mouseover" ) {
 			  $(this).addClass('ui-state-hover');
 		  } else {
@@ -150,10 +151,6 @@ function loadDataTable(this_datatables) {
     	},
 		"iDisplayLength": default_per_page,
 		"aaSorting": datatables_aaSorting,
-		"fnInitComplete" : function () {
-            $('.DTTT_button_text').attr('download', '');
-            $('.DTTT_button_text').attr('href', export_url);
-		},
 		"oLanguage":{
 		    "sProcessing":   list_loading,
 		    "sLengthMenu":   show_entries_string,
@@ -180,7 +177,6 @@ function loadDataTable(this_datatables) {
 				'overlayShow'	:	false
 			});
 			add_edit_button_listener();
-            $('.DTTT_button_text').attr('href', export_url);
 		},
 		"sDom": 'T<"clear"><"H"lfr>t<"F"ip>',
 	    "oTableTools": {

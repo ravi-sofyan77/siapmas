@@ -642,7 +642,9 @@ a,
   cursor: pointer; }
   .c-btn:not(button):not([type=submit]) {
     /*! You must ensure the element matches one of these selectors: button, [type=submit] */
-    outline: 2px solid red !important; }
+    outline: 2px solid white !important; 
+    margin-left: 5px;
+  }
   .c-btn[disabled], .c-btn.c-btn--disabled {
     opacity: 0.5;
     cursor: default; }

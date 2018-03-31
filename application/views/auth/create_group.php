@@ -1,8 +1,5 @@
 <h1><?php echo lang('create_group_heading');?></h1>
-<p><?php echo lang('create_group_subheading');?></p><div class="row">
-      
-<div class="col-12 col-md-6 offset-md-3">
-
+<p><?php echo lang('create_group_subheading');?></p>
 
 <div id="infoMessage"><?php echo $message;?></div>
 
@@ -17,16 +14,7 @@
             <?php echo lang('create_group_desc_label', 'description');?> <br />
             <?php echo form_input($description);?>
       </p>
-      <div class="form-group">
-      	<a href="javascript:history.back()" class="btn ">
-      	<i class="fa fa-arrow-left"></i>&nbsp;
-      	Kembali
-      </a>
-      <?php echo form_submit('submit', lang('create_group_submit_btn'),array('class'=>'btn btn-primary'));?>	
-      </div>
-      
+
+      <p><?php echo form_submit('submit', lang('create_group_submit_btn'),array('class'=>'c-btn c-btn--primary"'));?></p>
 
 <?php echo form_close();?>
-</div>
-
-</div>

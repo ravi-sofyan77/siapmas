@@ -18,100 +18,176 @@ class Mahasiswa extends MY_Controller {
 	 * map to /index.php/welcome/<method_name>
 	 * @see https://codeigniter.com/user_guide/general/urls.html
 	 */
+	public $user_id; //atribut
 
 	public function __construct(){
 		parent::__construct();
-		$this->template->set_layout('ui_bootstrap');
-	}
-	public function index()
-	{
-		$this->load->view('ui_dropbox');
+		$this->load->library(array('ion_auth', 'form_validation','template'));
+		$this->load->helper('siapmas');
+		$this->template->set_layout('ui_dropbox');
 	}
 
-	public function daftar_pengaduan()
-	{
+	public function index(){
+		$this->load->library('gc_dependent_select');
+		
 		$this->crud->set_table('pengaduan');
 		$this->crud->set_subject('Pengaduan');
+		$this->crud->set_relation('pengaduan_kepada','departement','departement_name');
+		$this->crud->set_relation('id_prasarana','prasarana','nama_prasarana');
+		$this->crud->set_relation('id_sarana','sarana','nama_sarana');
+		$this->crud->display_as('id_prasarana','Prasarana')
+			 		->display_as('id_sarana','Sarana');
 		
-		$this->crud->set_relation('pengaduan_kepada','groups','name');
+
+		$this->crud->where('arsipkan','tidak');
+
+		$user_id = $this->session->userdata('user_id');
+		$this->crud->where('pengaduan_dari',$user_id);
 		
-		$this->crud->display_as('pengaduan_kepada','Pengaduan kepada');
+		$columns = array('waktu_pengaduan','pengaduan_kepada','pesan_pengaduan','status_pengaduan');
+		$this->crud->columns($columns);
+
 		
-		$this->crud->columns('pengaduan_tentang','pengaduan_kepada','status_pengaduan');
-		//$this->crud->unset_columns('status_pengaduan');
-		$this->crud->fields('pengaduan_tentang','pengaduan_kepada');
-		$this->crud->required_fields('pengaduan_tentang');
+		$this->crud->add_action('Review', '', '','',array($this,'go_to_review'));
+		$this->crud->add_action('Arsipkan', '', '','',array($this,'go_to_arsipkan'));
+
+		$this->crud->required_fields('pesan_pengaduan');
+		$this->crud->fields('pengaduan_kepada','id_prasarana','id_sarana','lampiran_pengaduan','pesan_pengaduan');
+		$this->crud->set_field_upload('lampiran_pengaduan','uploads');
+
+		$this->crud->callback_after_insert(array($this,'update_after_insert_pengaduan'));
+
+
+
+
+		$fields = array(
+			// Field Provinsi
+			'pengaduan_kepada' => array( // first dropdown name
+				'table_name' => 'departement', // table of country
+				'title' => 'departement_name', // country title
+				'id_field'=>'id_departement',
+				'relate' => null, // the first dropdown hasn't a relation
+				'data-placeholder' => 'Pilih Bidang' //dropdown's data-placeholder:
+			),
+			'id_prasarana' => array( // second dropdown name
+				'table_name' => 'prasarana', // table of state
+				'title' => 'nama_prasarana', // state title
+				'id_field' => 'id_prasarana', // table of state: primary key
+				'relate' => 'dari_bidang', // table of state:
+				'data-placeholder' => 'Pilih Prasarana' //dropdown's data-placeholder:
+			),
+			'id_sarana' => array(
+				'table_name' => 'sarana',
+				'title' => 'nama_sarana',
+				//'title' => 'ID: {id_kec} / Kota : {nama}',  // now you can use this format )))
+				//'where' =>"post_code>'167'",  // string. It's an optional parameter.
+				//'order_by'=>"id_kab DESC",  // string. It's an optional parameter.
+				'id_field' => 'id_sarana',
+				'relate' => 'id_prasarana',
+				'data-placeholder' => 'Pilih Sarana'
+			)
+		);
+		$config = array(
+			'main_table' => 'pengaduan',
+			'main_table_primary' => 'id_pengaduan',
+			"url" => site_url() . '/mahasiswa/index/',
+			'ajax_loader' => base_url() . 'assets/ajax-loader.gif'
+		);
+		$categories = new gc_dependent_select($this->crud, $fields, $config);
+
+		// first method:
+		//$output = $categories->render();
+
+		// the second method:
+		$js 			= $categories->get_js();
+		$output = $this->crud->render();
+		$output->output.= $js;
 		
-		$output = (array) $this->crud->render();
-		
+		$output = (array) $output;
+		$output['total_results'] = $this->crud->get_total_results();
 		$this->template->render($output);
 	}
 
-	public function buat_pengaduan($id_group='',$id_prasarana='')
-	{
-		$this->load->model(array('sarana','prasarana'));
-		$data['id_group']		= $id_group;
-		$data['id_prasarana'] 	= $id_prasarana;
-		$data['prasarana']		= $this->prasarana->get_by_id_group($id_group);
-		$data['sarana'] 		= $this->sarana->get_by_id_prasarana($id_prasarana);
-		$data['groups']			= $this->db->get('groups')->result_array();
-		$this->template->set_content('mahasiswa/buat_pengaduan',$data)->render();
+
+	public function daftar_terarsip(){
+		$this->crud->set_table('pengaduan');
+		$this->crud->set_subject('Pengaduan');
+		$this->crud->set_relation('pengaduan_kepada','departement','departement_name');
+		$this->crud->set_relation('id_prasarana','prasarana','nama_prasarana');
+		$this->crud->set_relation('id_sarana','sarana','nama_sarana');
+		$this->crud->display_as('id_prasarana','Prasarana')
+			 		->display_as('id_sarana','Sarana');
+		$columns = array('waktu_pengaduan','pengaduan_kepada','pesan_pengaduan','status_pengaduan');
+		$this->crud->columns($columns);
+		$this->crud->unset_add();
+		$this->crud->unset_edit();
+		$output = (array) $this->crud->render();
+		$this->template->render($output);
 	}
 
-	public function simpan_pengaduan($id_pengaduan='')
-	{
-		if ($this->form_validation->run('simpan_pengaduan')) {
-			$this->load->model('pengaduan');
-			$last_id 	= $this->pengaduan->last_id();
-			$data 		= $this->input->post(NULL,true);
-			
-			if ($_FILES['lampiran_pengaduan']['size'] > 0 && $_FILES['lampiran_pengaduan']['error'] == 0){
-				$config['allowed_types'] ='gif|jpg|png|pdf|docx|jpeg';
-				$config['upload_path'] 	 = FCPATH.'uploads/';
-				$config['file_name']	 = $last_id.'_'.time();
-				//$config['upload_url']	= base_url($path);
-				$this->load->library('upload',$config);
-				if ($this->upload->do_upload('lampiran_pengaduan')) {
-					$file = $this->upload->data();
-					$data['lampiran_pengaduan'] = 'uploads/'.$file['file_name'];
-				}else{
-					$this->template->set_alert('warning',$this->upload->display_errors());
-					$this->go_back();
-				}
-			}
-			if (isset($data['sarana_terkait'])) {
-				unset($data['sarana_terkait']);
-			}
-			$data['pengaduan_dari'] = $this->session->userdata('user_id');
-			//$this->logged_in['user_id'];
-			if ($id_pengaduan = $this->pengaduan->insert($data)) {
-				
-				if (isset($_POST['sarana_terkait'])) {
+	public function update_after_insert_pengaduan($post=array(),$id){
+		$data = $post;
+		if (function_exists('remove_undefined_column')) {
+			$data = remove_undefined_column('pengaduan',$post);
+		}
+		$data['pengaduan_dari']	= $this->session->userdata('user_id');
+		$data['tanggapan_diterima'] = 'tidak';
+		$this->db->where('id_pengaduan',$id);
+		$this->db->update('pengaduan',$data);
+		return true;
+	}
 
-					if (is_array($_POST['sarana_terkait'])) {
-						foreach ($_POST['sarana_terkait'] as $key => $value) {
-							$detail['id_pengaduan'] 	= $id_pengaduan;
-							$detail['sarana_terkait'] 	= $value;
-							$this->db->insert('detail_pengaduan',$detail);
-						}
-					}
-				}
-				$this->go_to('detail_pengaduan/'.$id_pengaduan);
+	public function go_to_review($primary_key,$row){
+
+		return site_url('mahasiswa/review_pengaduan/'.$primary_key);
+	}
+
+	public function go_to_arsipkan($primary_key,$row){
+
+		return site_url('mahasiswa/arsipkan_pengaduan/'.$primary_key);
+	}
+
+	public function review_pengaduan($primary_key){
+		$this->load->model('pengaduan');
+		$pengaduan 			= $this->pengaduan->get($primary_key);
+		if (isset($pengaduan['status_pengaduan'])) {
+			if ($pengaduan['status_pengaduan'] == 'selesai') {
+				$data['pengaduan'] = $pengaduan;
+				$this->template->set_content('mahasiswa/review_pengaduan',$data)->render();
 			}else{
-				$this->template->set_alert('error','gagal mengirim pengaduan :(');
-				$this->go_back();
+				$this->template->set_alert('info','status pengaduan masih '.$pengaduan['status_pengaduan']);
+				redirect('mahasiswa/index/read/'.$primary_key,'refresh');
 			}
 		}else{
-			$this->template->set_alert('warning',validation_errors());
-			$this->go_back();
+			$this->template->set_alert('info','status pengaduan tidak ada');
+			redirect('mahasiswa/index/read/'.$primary_key,'refresh');
 		}
+		
 	}
 
-	public function detail_pengaduan($id_pengaduan='')
-	{
+	public function arsipkan_pengaduan($primary_key){
 		$this->load->model('pengaduan');
-		$data['detail'] = $this->pengaduan->get($id_pengaduan);
-		$this->template->set_content('mahasiswa/detail_pengaduan',$data)->render();
+		if (isset($primary_key)) {
+			$data['arsipkan'] ='ya';
+			if ($this->pengaduan->update($primary_key,$data)) {
+				$this->template->set_alert('success','pengaduan berhasil terarsip');
+			}else{
+				$this->template->set_alert('warning','pengaduan gagal terarsip :(');
+			}
+		}
+		redirect('mahasiswa/index','refresh');
 	}
+
+	public function submit_review_pengaduan($id_pengaduan=''){
+		$this->load->model('pengaduan');
+		if ($this->form_validation->run('submit_review_pengaduan')) {
+			$data = $this->input->post(NULL,true);
+			$this->pengaduan->update($id_pengaduan,$data);
+		}else{
+			$this->template->set_alert('warning',validation_errors());
+		}
+		redirect('mahasiswa/index','refresh');
+	}
+
 }
 

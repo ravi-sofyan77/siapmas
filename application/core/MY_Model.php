@@ -36,11 +36,12 @@ class MY_Model extends Jamie_Model
 	function __construct()	
 	{
 		parent::__construct();
+		date_default_timezone_set("Asia/Jakarta");
 		/**
 		 * [$this->column mengisikan default column dari fields table yang sedang digunakan]
 		 * @var [type]
 		 */
-		//$this->column = $this->db->list_fields($this->_table);
+		$this->column = $this->db->list_fields($this->_table);
 	}
 	/**
 	 * [check_query_statement memeriksa isi pernyataan query terakhir yang dijalankan]

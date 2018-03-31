@@ -22,14 +22,14 @@
 					foreach($row->action_urls as $action_unique_id => $action_url){
 						$action = $actions[$action_unique_id];
 				?>
-						<a href="<?php echo $action_url; ?>" class="edit_button btn ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" role="button">
+						<a href="<?php echo $action_url; ?>" class="edit_button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" role="button">
 							<span class="ui-button-icon-primary ui-icon <?php echo $action->css_class; ?> <?php echo $action_unique_id;?>"></span><span class="ui-button-text">&nbsp;<?php echo $action->label?></span>
 						</a>
 				<?php }
 				}
 				?>
 				<?php if(!$unset_read){?>
-					<a href="<?php echo $row->read_url?>" class="btn btn-default edit_button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" role="button">
+					<a href="<?php echo $row->read_url?>" class="edit_button ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary" role="button">
 						<span class="ui-button-icon-primary ui-icon ui-icon-document"></span>
 						<span class="ui-button-text">&nbsp;<?php echo $this->l('list_view'); ?></span>
 					</a>

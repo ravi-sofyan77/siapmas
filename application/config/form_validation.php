@@ -11,5 +11,8 @@ $config = array(
 	'simpan_pengaduan' =>array(
 		array('field'=>'pesan_pengaduan','label'=>'pesan pengaduan','rules'=>'trim|required')
 	),	
-	
+	'submit_review_pengaduan' =>array(
+		array('field'=>'nilai_tanggapan','label'=>'Nilai tanggapan','rules'=>'trim|required|is_natural_no_zero'),
+		array('field'=>'tanggapan_diterima','label'=>'Tanggapan diterima','rules'=>'trim|required')
+	),
 );
